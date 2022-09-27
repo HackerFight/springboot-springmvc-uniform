@@ -5,14 +5,19 @@ import com.qiuguan.boot.handler.UniformResponseHandler;
 import com.qiuguan.boot.message.MyJsonHttpMessageConvert;
 import com.qiuguan.boot.resolver.RequestBodyMappingHandlerMethodParamResolver;
 import com.qiuguan.boot.resolver.RequestParamMappingAgreementResolver;
+import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
+import org.springframework.web.servlet.config.annotation.DelegatingWebMvcConfiguration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 import org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor;
 
@@ -25,10 +30,26 @@ import java.util.List;
 /**
  * @author qiuguan
  * @date 2022/09/09 09:25:14  星期五
+ *
+ * Springmvc文档中关于定制化webmvc, 有提到可以直接继承 {@link DelegatingWebMvcConfiguration} 
+ * 这样就可以不用实现 {@link WebMvcConfigurer}
+ * 同时也可以忽略 {@link EnableWebMvc} 注解
+ * 
+ * 但是使用时要注意：webmvc的自定配置类 {@link WebMvcAutoConfiguration}
+ * 生效的前提条件是容器中没有 {@link WebMvcConfigurationSupport} bean, 但是定制化webmvc, 继承了 {@link DelegatingWebMvcConfiguration }
+ * 同时也继承了 {@link WebMvcConfigurationSupport}, 这样spring的自动配置类 {@link WebMvcAutoConfiguration}
+ * 就不会生效了，想要使用相关的功能就要重写方法
  */
 @Configuration
-public class MvcConfig extends WebMvcConfigurationSupport {
+public class MvcConfig extends DelegatingWebMvcConfiguration {
 
+
+    /**
+     * 自定义返回值处理器，它就是对 {@link ResponseBody} 注解返回值的一个进一步处理，其内部
+     * 还是交给 {@link ResponseBody} 注解对应的处理器 {@link RequestResponseBodyMethodProcessor}去处理
+     * 
+     * {@link #addReturnValueHandlers(List)}
+     */
     @Bean
     public UniformResponseHandler uniformResponseHandler(RequestMappingHandlerAdapter adapter){
         List<HandlerMethodReturnValueHandler> returnValueHandlers = adapter.getReturnValueHandlers();
@@ -80,12 +101,19 @@ public class MvcConfig extends WebMvcConfigurationSupport {
     }
 
 
+    /**
+     * 添加参数解析器
+     */
     @Override
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(new RequestParamMappingAgreementResolver());
         argumentResolvers.add(new RequestBodyMappingHandlerMethodParamResolver());
     }
 
+    /**
+     * 添加MessageConverter
+     * 注意是实现这个方法，这样spring默认的MessageConverter也可以使用 {@link #configureMessageConverters(List)}
+     */
     @Override
     protected void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         converters.add(new MyJsonHttpMessageConvert());
