@@ -6,3 +6,4 @@
 ## 4. 参数校验
 ## 5. 自定义HttpMessageConveter
 ## 6. 静态资源处理
+## 7. 自定义Conveter
