@@ -38,7 +38,13 @@ import java.util.List;
  * 但是使用时要注意：webmvc的自定配置类 {@link WebMvcAutoConfiguration}
  * 生效的前提条件是容器中没有 {@link WebMvcConfigurationSupport} bean, 但是定制化webmvc, 继承了 {@link DelegatingWebMvcConfiguration }
  * 同时也继承了 {@link WebMvcConfigurationSupport}, 这样spring的自动配置类 {@link WebMvcAutoConfiguration}
- * 就不会生效了，想要使用相关的功能就要重写方法
+ * 就不会生效了，想要使用相关的功能就要重写方法.
+ *
+ * 但是在实际开发中，我们并不需要完全接管springmvc, 所以最好不要使用 {@link EnableWebMvc} 或者 实现 {@link DelegatingWebMvcConfiguration}
+ *
+ * 如果需要定制化springmvc, 可以继承或者实现如下接口
+ * @see org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter  在2.0版本中已废弃
+ * @see WebMvcConfigurer 实现这个接口即可
  */
 @Configuration
 public class MvcConfig extends DelegatingWebMvcConfiguration {
